@@ -47,17 +47,18 @@ local function verifyKey(key)
     end
 end
 
-local function fetchScriptUrl(key)
+local function fetchScript(scriptName, key)
     local hwid = getHWID()
-    local url = API_BASE_URL .. "/api/get-script?key=" .. HttpService:UrlEncode(key) .. "&hwid=" .. HttpService:UrlEncode(hwid)
+    local url = API_BASE_URL .. "/api/get-script?key=" .. HttpService:UrlEncode(key)
+                .. "&hwid=" .. HttpService:UrlEncode(hwid)
+                .. "&script=" .. HttpService:UrlEncode(scriptName)
     local success, response = pcall(function() return game:HttpGet(url) end)
-    if not success then error("Failed to fetch script URL") end
-    local data = HttpService:JSONDecode(response)
-    if data.success and data.scriptUrl then
-        return data.scriptUrl
-    else
+    if not success then error("Failed to fetch script") end
+    if response:sub(1,1) == "{" then
+        local data = HttpService:JSONDecode(response)
         error(data.error or "Unknown error")
     end
+    return response
 end
 
 local function showKeyPrompt()
@@ -200,8 +201,7 @@ local function main()
         end
     end
 
-    local scriptUrl = fetchScriptUrl(key)
-    local scriptContent = game:HttpGet(scriptUrl)
+    local scriptContent = fetchScript("tds.lua", key)
     loadstring(scriptContent)()
 end
 
