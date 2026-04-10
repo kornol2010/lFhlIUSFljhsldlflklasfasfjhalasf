@@ -1,12 +1,11 @@
--- ==================== LOADER (CICHY, ELEGANCKI GUI) ====================
+-- ==================== LOADER (CICHY, ELEGANCKI GUI, CZARNY, Z X) ====================
 local API_BASE_URL = "https://tds-key-backend.onrender.com"   -- ZMIEN NA SWOJ
-local CONFIG_FILE = "ADS_Config.json"
+local CONFIG_FILE = "key.json"  -- zmiana nazwy pliku
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Funkcje pomocnicze bez logow
 local function readConfig()
     if not isfile or not readfile then return nil end
     if not isfile(CONFIG_FILE) then return nil end
@@ -62,7 +61,7 @@ local function fetchScriptUrl(key)
     end
 end
 
--- Eleganckie, przezroczyste GUI
+-- Eleganckie, czarne, półprzezroczyste GUI z przyciskiem X
 local function showKeyPrompt()
     local screen = Instance.new("ScreenGui")
     screen.Name = "KeyPrompt"
@@ -73,25 +72,32 @@ local function showKeyPrompt()
     local background = Instance.new("Frame")
     background.Size = UDim2.new(0, 320, 0, 180)
     background.Position = UDim2.new(0.5, -160, 0.5, -90)
-    background.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    background.BackgroundTransparency = 0.15
+    background.BackgroundColor3 = Color3.fromRGB(10, 10, 15)  -- bardzo ciemny
+    background.BackgroundTransparency = 0.2
     background.BorderSizePixel = 0
     background.Parent = screen
     Instance.new("UICorner", background).CornerRadius = UDim.new(0, 12)
 
-    local glow = Instance.new("ImageLabel")
-    glow.Size = UDim2.new(1, 20, 1, 20)
-    glow.Position = UDim2.new(0, -10, 0, -10)
-    glow.BackgroundTransparency = 1
-    glow.Image = "rbxassetid://5028857084" -- biały okrągły gradient
-    glow.ImageColor3 = Color3.fromRGB(100, 150, 255)
-    glow.ImageTransparency = 0.7
-    glow.Parent = background
-    glow.ZIndex = 0
+    -- Przycisk X (zamknięcie)
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0, 24, 0, 24)
+    closeButton.Position = UDim2.new(1, -28, 0, 8)
+    closeButton.BackgroundTransparency = 1
+    closeButton.Text = "X"
+    closeButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 18
+    closeButton.Parent = background
+
+    closeButton.MouseButton1Click:Connect(function()
+        screen:Destroy()
+        -- Zakończ skrypt
+        pcall(function() error("Zamknieto przez uzytkownika") end)
+    end)
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.Position = UDim2.new(0, 0, 0, 20)
+    title.Size = UDim2.new(1, -40, 0, 30)
+    title.Position = UDim2.new(0, 20, 0, 20)
     title.BackgroundTransparency = 1
     title.Text = "Weryfikacja klucza"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -100,8 +106,8 @@ local function showKeyPrompt()
     title.Parent = background
 
     local desc = Instance.new("TextLabel")
-    desc.Size = UDim2.new(1, 0, 0, 20)
-    desc.Position = UDim2.new(0, 0, 0, 55)
+    desc.Size = UDim2.new(1, -40, 0, 20)
+    desc.Position = UDim2.new(0, 20, 0, 55)
     desc.BackgroundTransparency = 1
     desc.Text = "Wprowadz swoj klucz licencyjny"
     desc.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -112,14 +118,14 @@ local function showKeyPrompt()
     local textBox = Instance.new("TextBox")
     textBox.Size = UDim2.new(1, -40, 0, 35)
     textBox.Position = UDim2.new(0, 20, 0, 80)
-    textBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    textBox.BackgroundTransparency = 0.85
+    textBox.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    textBox.BackgroundTransparency = 0.3
     textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textBox.PlaceholderText = "TDS-XXXX-XXXX"
-    textBox.PlaceholderColor3 = Color3.fromRGB(160, 160, 160)
+    textBox.PlaceholderText = ""                -- brak tekstu zastępczego
     textBox.Font = Enum.Font.Code
     textBox.TextSize = 16
     textBox.ClearTextOnFocus = false
+    textBox.Text = ""                           -- pusty
     textBox.Parent = background
     Instance.new("UICorner", textBox).CornerRadius = UDim.new(0, 6)
 
@@ -135,8 +141,8 @@ local function showKeyPrompt()
     Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
     local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(1, 0, 0, 20)
-    status.Position = UDim2.new(0, 0, 0, 165)
+    status.Size = UDim2.new(1, -40, 0, 20)
+    status.Position = UDim2.new(0, 20, 0, 165)
     status.BackgroundTransparency = 1
     status.Text = ""
     status.TextColor3 = Color3.fromRGB(255, 120, 120)
@@ -181,12 +187,13 @@ end
 
 -- Glowna funkcja
 local function main()
+    wait(1) -- odczekanie 1s przed sprawdzeniem pliku
+
     local key = readConfig()
 
     if key then
         local ok, err = verifyKey(key)
         if not ok then
-            -- Klucz nieprawidlowy lub wygasl - usun z pliku
             deleteConfig()
             key = nil
         end
@@ -195,7 +202,7 @@ local function main()
     if not key then
         key = showKeyPrompt()
         if not key then
-            return -- uzytkownik zamknal okno
+            return -- uzytkownik zamknal okno X
         end
     end
 
@@ -206,6 +213,5 @@ end
 
 local success, err = pcall(main)
 if not success then
-    -- Cicha obsluga bledu - mozna ewentualnie pokazac komunikat w GUI
-    warn("Loader error: " .. tostring(err))
+    -- Cicha obsluga
 end
