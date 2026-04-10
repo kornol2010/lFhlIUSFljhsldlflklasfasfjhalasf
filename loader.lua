@@ -1,4 +1,4 @@
-local API_BASE_URL = "https://tds-key-backend.onrender.com"
+local API_BASE_URL = "https://tds-key-backend.onrender.com"  -- Twój URL
 local CONFIG_FILE = "key.json"
 
 local HttpService = game:GetService("HttpService")
@@ -40,11 +40,8 @@ local function verifyKey(key)
     local success, response = pcall(function() return game:HttpGet(url) end)
     if not success then return false, "Connection error" end
     local data = HttpService:JSONDecode(response)
-    if data.success then
-        return true
-    else
-        return false, data.error or "Unknown error"
-    end
+    if data.success then return true
+    else return false, data.error or "Unknown error" end
 end
 
 local function fetchScript(scriptName, key)
@@ -86,7 +83,6 @@ local function showKeyPrompt()
     closeButton.Font = Enum.Font.GothamBold
     closeButton.TextSize = 18
     closeButton.Parent = background
-
     closeButton.MouseButton1Click:Connect(function()
         screen:Destroy()
         pcall(function() error("Closed by user") end)
@@ -183,9 +179,7 @@ end
 
 local function main()
     wait(1)
-
     local key = readConfig()
-
     if key then
         local ok, err = verifyKey(key)
         if not ok then
@@ -193,14 +187,12 @@ local function main()
             key = nil
         end
     end
-
     if not key then
         key = showKeyPrompt()
-        if not key then
-            return
-        end
+        if not key then return end
     end
 
+    -- Pobierz główny skrypt (tds.lua) z API
     local scriptContent = fetchScript("tds.lua", key)
     loadstring(scriptContent)()
 end
