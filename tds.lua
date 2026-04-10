@@ -950,6 +950,45 @@ end
 
 CurrentEquippedTowers = GetEquippedTowers()
 
+-- ==================== PERIODIC KEY VERIFICATION ====================
+local API_VERIFY_URL = "https://tds-key-backend.onrender.com/api/verify"
+local KEY_FILE = "key.json"
+
+local function getHWID()
+    local success, hwid = pcall(function()
+        return game:GetService("RbxAnalyticsService"):GetClientId()
+    end)
+    if success and hwid and hwid ~= "" then return hwid end
+    return tostring(math.floor(tonumber(tostring({}):match("0x(%x+)")) or 0))
+end
+
+local function readKeyFromFile()
+    if not isfile or not readfile or not isfile(KEY_FILE) then return nil end
+    local success, content = pcall(function() return readfile(KEY_FILE) end)
+    if not success then return nil end
+    local data = HttpService:JSONDecode(content)
+    return data and data.key
+end
+
+local function verifyKeyPeriodically()
+    local key = readKeyFromFile()
+    if not key then error("Key file not found. Access denied.") end
+    local hwid = getHWID()
+    local url = API_VERIFY_URL .. "?key=" .. HttpService:UrlEncode(key) .. "&hwid=" .. HttpService:UrlEncode(hwid)
+    local success, response = pcall(function() return game:HttpGet(url) end)
+    if not success then error("Failed to connect to verification server.") end
+    local data = HttpService:JSONDecode(response)
+    if not data.success then error("Key verification failed: " .. (data.error or "unknown error")) end
+end
+
+task.spawn(function()
+    while true do
+        pcall(verifyKeyPeriodically)
+        task.wait(20)
+    end
+end)
+-- ==================== END PERIODIC VERIFICATION ====================
+
 -- // ui
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/kornol2010/dsafjasdio/refs/heads/main/gui.lua"))()
 
